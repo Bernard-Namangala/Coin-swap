@@ -11,6 +11,7 @@ import { formatUnits } from "viem";
 import useTokenBalance from "../hooks/useTokenBalance";
 import { getQuote, getTokenList } from "../api/swap";
 import { SwapQuoteData, TokenType } from "../types";
+import ConfirmSwapModal from "../components/ConfirmSwapModal";
 
 interface ImageWrapperProps {
   src: string;
@@ -61,6 +62,8 @@ const Swap: React.FC = () => {
   );
   const [token1Modal, setToken1Modal] = React.useState<boolean>(false);
   const [token2Modal, setToken2Modal] = React.useState<boolean>(false);
+  const [confirmModalOpen, setConfirmModalOpen] =
+    React.useState<boolean>(false);
   const [fromAmount, setFromAmount] = React.useState(0);
   const [toAmount, setToAmount] = React.useState(0);
   const [swapQuote, setSwapQuote] = React.useState<SwapQuoteData | undefined>(
@@ -167,6 +170,7 @@ const Swap: React.FC = () => {
         className={`justify-center items-center px-16 py-5 mt-3 text-base text-center text-white whitespace-nowrap bg-yellow rounded-xl ${
           loading ? "opacity-50 cursor-not-allowed" : "opacity-100"
         }`}
+        onClick={() => swapQuote?.chainId && setConfirmModalOpen(true)}
       >
         Swap
       </button>
@@ -199,6 +203,16 @@ const Swap: React.FC = () => {
         setToken={setToToken}
         disabledToken={fromToken}
       />
+      {swapQuote?.chainId && (
+        <ConfirmSwapModal
+          isOpen={confirmModalOpen}
+          swapQuote={swapQuote}
+          onClose={() => setConfirmModalOpen(false)}
+          fromToken={fromToken}
+          toToken={toToken}
+          customSlippage={customSlippage}
+        />
+      )}
     </section>
   );
 };
