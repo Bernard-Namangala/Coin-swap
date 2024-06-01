@@ -129,7 +129,7 @@ const Swap: React.FC = () => {
   }, [swapQuote]);
 
   return (
-    <section className="flex flex-col  px-2 pt-4 pb-2.5 bg-custombBlack rounded-xl sm:min-w-[472px] max-w-[472px] max-h-[600px]">
+    <section className="flex flex-col  px-2 pt-4 pb-2.5 bg-custombBlack rounded-xl w-full max-w-[472px] max-h-[600px]">
       <header className="flex justify-between self-center px-5 leading-4 whitespace-nowrap w-full text-slate-500">
         <div>Swap</div>
         <img

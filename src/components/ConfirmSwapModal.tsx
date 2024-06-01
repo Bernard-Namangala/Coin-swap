@@ -1,7 +1,15 @@
 import React, { useState } from "react";
 import { SwapOptions, SwapQuoteData, TokenType } from "../types";
-import { formatUnits } from "viem";
-import { useChainId } from "wagmi";
+import { formatUnits, erc20Abi } from "viem";
+import {
+  useAccount,
+  useChainId,
+  useReadContract,
+  useWriteContract,
+} from "wagmi";
+import { OPEN_OCEAN_CONTRACTS } from "../constants";
+import { readContract, writeContract } from "@wagmi/core";
+import { config } from "../config";
 
 const SwapAmount = ({ amount, amountUSD, action, symbol, icon }: any) => {
   return (
@@ -40,8 +48,43 @@ const ConfirmSwapModal: React.FC<ConfirmSwapModalProps> = ({
   customSlippage,
 }) => {
   const chainId = useChainId();
+  const account = useAccount();
 
   if (!isOpen) return null;
+
+  const swap = async () => {
+    const open_ocean_contract_address: any = OPEN_OCEAN_CONTRACTS[chainId];
+
+    if (fromToken?.address) {
+      const args: any = [account.address, open_ocean_contract_address];
+
+      // @ts-ignore
+      // const result = await readContract(config, {
+      //   abi: erc20Abi,
+      //   address: fromToken.address,
+      //   functionName: "allowance",
+      //   args,
+      // });
+
+      // if (result < BigInt(swapQuote.outAmount)) {
+      //   // @ts-ignore
+      //   await writeContract(config, {
+      //     abi: erc20Abi,
+      //     address: fromToken.address,
+      //     functionName: "approve",
+      //     args: [open_ocean_contract_address, BigInt(swapQuote.outAmount)],
+      //   });
+      // }
+    }
+    // const quoteData = {
+    //   chain: chain_id,
+    //   inTokenAddress: fromToken?.address,
+    //   outTokenAddress: toToken?.address,
+    //   amount: fromAmount,
+    //   slippage: 1,
+    //   gasPrice: gasPrice.data?.toString(),
+    // };
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 ">
@@ -119,6 +162,7 @@ const ConfirmSwapModal: React.FC<ConfirmSwapModalProps> = ({
         </div>
         <button
           type="submit"
+          onClick={() => swap()}
           className={`justify-self-end justify-center items-center px-16 py-5 mt-3 text-base text-center text-white whitespace-nowrap bg-yellow rounded-xl w-full`}
         >
           Approve and Swap

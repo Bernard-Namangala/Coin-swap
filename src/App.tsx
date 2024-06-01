@@ -32,7 +32,7 @@ function App() {
     <WagmiProvider config={config}>
       <QueryClientProvider client={queryClient}>
         <Navbar />
-        <div className="flex justify-center items-center w-screen h-screen bg-bodyBackground">
+        <div className="flex justify-center items-center w-screen h-screen bg-bodyBackground p-4">
           <SwapComponent />
         </div>
       </QueryClientProvider>
