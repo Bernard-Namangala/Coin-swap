@@ -1,15 +1,11 @@
 import React, { useState } from "react";
 import { SwapOptions, SwapQuoteData, TokenType } from "../types";
 import { formatUnits, erc20Abi } from "viem";
-import {
-  useAccount,
-  useChainId,
-  useReadContract,
-  useWriteContract,
-} from "wagmi";
+import { useAccount, useChainId } from "wagmi";
 import { OPEN_OCEAN_CONTRACTS } from "../constants";
-import { readContract, writeContract } from "@wagmi/core";
-import { config } from "../config";
+import Web3 from "web3";
+import { getSwapQuote } from "../api/swap";
+import BigNumber from "bignumber.js";
 
 const SwapAmount = ({ amount, amountUSD, action, symbol, icon }: any) => {
   return (
@@ -48,42 +44,111 @@ const ConfirmSwapModal: React.FC<ConfirmSwapModalProps> = ({
   customSlippage,
 }) => {
   const chainId = useChainId();
-  const account = useAccount();
+  const { address, connector } = useAccount();
 
   if (!isOpen) return null;
 
   const swap = async () => {
+    const web3 = new Web3((await connector?.getProvider()) as any);
+
     const open_ocean_contract_address: any = OPEN_OCEAN_CONTRACTS[chainId];
 
     if (fromToken?.address) {
-      const args: any = [account.address, open_ocean_contract_address];
+      const args: any = [address, open_ocean_contract_address];
 
-      // @ts-ignore
-      // const result = await readContract(config, {
-      //   abi: erc20Abi,
-      //   address: fromToken.address,
-      //   functionName: "allowance",
-      //   args,
-      // });
+      if (
+        fromToken?.address.toLowerCase() !==
+        "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+      ) {
+        try {
+          const fromTokenContract = new web3.eth.Contract(
+            erc20Abi,
+            fromToken.address
+          );
 
-      // if (result < BigInt(swapQuote.outAmount)) {
-      //   // @ts-ignore
-      //   await writeContract(config, {
-      //     abi: erc20Abi,
-      //     address: fromToken.address,
-      //     functionName: "approve",
-      //     args: [open_ocean_contract_address, BigInt(swapQuote.outAmount)],
-      //   });
-      // }
+          const currentAllowance: string = await fromTokenContract.methods
+            .allowance(address, open_ocean_contract_address)
+            .call();
+
+          // If the current allowance is sufficient, no need to approve again
+          if (BigNumber(currentAllowance).lt(swapQuote.inAmount)) {
+            const isUSDT =
+              fromToken.address ===
+              "0xdac17f958d2ee523a2206206994597c13d831ec7";
+
+            if (isUSDT && Number(currentAllowance.toString()) !== 0) {
+              // If current allowance is non-zero, set it to zero first
+              const zeroEstimateGas = await fromTokenContract.methods
+                .approve(open_ocean_contract_address, 0)
+                .estimateGas({ from: address });
+
+              if (!zeroEstimateGas) {
+                throw new Error(
+                  "Failed to estimate gas for zero approval transaction."
+                );
+              }
+
+              // Approve the spending with the estimated gas
+              await fromTokenContract.methods
+                .approve(open_ocean_contract_address, 0)
+                .send({
+                  from: address,
+                  gas: zeroEstimateGas.toString(),
+                });
+            }
+
+            // Estimate gas for the final approval transaction
+            const gasEstimate = await fromTokenContract.methods
+              .approve(open_ocean_contract_address, swapQuote.inAmount)
+              .estimateGas({ from: address });
+
+            if (!gasEstimate) {
+              throw new Error(
+                "Failed to estimate gas for approval transaction."
+              );
+            }
+
+            // Approve the spending with the estimated gas
+            await fromTokenContract.methods
+              .approve(open_ocean_contract_address, swapQuote.inAmount)
+              .send({
+                from: address,
+                gas: gasEstimate.toString(),
+              });
+          }
+        } catch (error) {
+          console.log(error);
+          throw new Error("Failed to approve spend.");
+        }
+      }
+
+      const quoteData = {
+        chain: chainId,
+        inTokenAddress: fromToken?.address,
+        outTokenAddress: toToken?.address,
+        amount: swapQuote.inAmount,
+        slippage: 1,
+        gasPrice: swapQuote.estimatedGas,
+        account: address,
+      };
+
+      const transactionData = await getSwapQuote(chainId, quoteData);
+
+      const tx = {
+        from: address,
+        to: open_ocean_contract_address,
+        value: transactionData?.value,
+        gas: transactionData?.estimatedGas,
+        gasPrice: transactionData?.gasPrice,
+      };
+
+      const result = await web3.eth.sendTransaction(tx);
+
+      if (result.transactionHash) {
+        onClose();
+        console.log(result);
+      }
     }
-    // const quoteData = {
-    //   chain: chain_id,
-    //   inTokenAddress: fromToken?.address,
-    //   outTokenAddress: toToken?.address,
-    //   amount: fromAmount,
-    //   slippage: 1,
-    //   gasPrice: gasPrice.data?.toString(),
-    // };
   };
 
   return (

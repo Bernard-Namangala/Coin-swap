@@ -79,3 +79,20 @@ export interface SwapQuoteData {
   save: number;
   price_impact: string;
 }
+
+export interface TransactionData {
+  inToken: TokenType;
+  outToken: TokenType;
+  inAmount: string;
+  outAmount: string;
+  estimatedGas: number;
+  minOutAmount: string;
+  from: string;
+  to: string;
+  value: string;
+  gasPrice: string;
+  data: string;
+  chainId: number;
+  rfqDeadline: number;
+  price_impact: string;
+}

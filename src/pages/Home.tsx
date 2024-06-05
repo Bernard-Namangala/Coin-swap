@@ -170,7 +170,7 @@ const Swap: React.FC = () => {
         className={`justify-center items-center px-16 py-5 mt-3 text-base text-center text-white whitespace-nowrap bg-yellow rounded-xl ${
           loading ? "opacity-50 cursor-not-allowed" : "opacity-100"
         }`}
-        onClick={() => swapQuote?.chainId && setConfirmModalOpen(true)}
+        onClick={() => swapQuote && setConfirmModalOpen(true)}
       >
         Swap
       </button>
@@ -203,7 +203,7 @@ const Swap: React.FC = () => {
         setToken={setToToken}
         disabledToken={fromToken}
       />
-      {swapQuote?.chainId && (
+      {swapQuote && (
         <ConfirmSwapModal
           isOpen={confirmModalOpen}
           swapQuote={swapQuote}
