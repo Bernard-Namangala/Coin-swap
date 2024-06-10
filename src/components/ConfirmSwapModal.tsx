@@ -151,6 +151,7 @@ const ConfirmSwapModal: React.FC<ConfirmSwapModalProps> = ({
       const result = await web3.eth.sendTransaction(tx);
 
       if (result.transactionHash) {
+        alert(result.transactionHash);
         onClose();
         console.log(result);
       }
