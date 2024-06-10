@@ -4,14 +4,16 @@ import SwapOptionsModal from "../components/SwapOptionsModal";
 import Token from "../components/Token";
 import SwitchTokensIcon from "../assets/images/switchTokens.svg";
 import SelectToken from "../components/SelectToken";
-import axios from "axios";
-import { OPEN_OCEAN_BASE_URL, TOP_TOKENS } from "../constants";
-import { useAccount, useBalance, useChainId, useGasPrice } from "wagmi";
+
+import { TOP_TOKENS } from "../constants";
+import { useAccount, useChainId, useGasPrice } from "wagmi";
 import { formatUnits } from "viem";
 import useTokenBalance from "../hooks/useTokenBalance";
 import { getQuote, getTokenList } from "../api/swap";
 import { SwapQuoteData, TokenType } from "../types";
 import ConfirmSwapModal from "../components/ConfirmSwapModal";
+
+import { useWeb3Modal } from "@web3modal/wagmi/react";
 
 interface ImageWrapperProps {
   src: string;
@@ -31,9 +33,12 @@ const ImageWrapper: React.FC<ImageWrapperProps> = ({ src, alt }) => {
   );
 };
 
-const SwitchTokens: React.FC = () => {
+const SwitchTokens: React.FC<{ onClick: () => void }> = ({ onClick }) => {
   return (
-    <main className="absolute inset-0 m-auto flex justify-center items-center w-[60px] h-[30px] ">
+    <main
+      className="absolute inset-0 m-auto flex justify-center items-center w-[60px] h-[30px] "
+      onClick={onClick}
+    >
       <ImageWrapper src={SwitchTokensIcon} alt="Description of the image" />
     </main>
   );
@@ -74,6 +79,7 @@ const Swap: React.FC = () => {
   const toTokenBalance = useTokenBalance(toToken, account.address);
   const chainId = useChainId();
   const gasPrice = useGasPrice();
+  const { open, close } = useWeb3Modal();
 
   React.useEffect(() => {
     // load tokens from openocean
@@ -128,6 +134,13 @@ const Swap: React.FC = () => {
       );
   }, [swapQuote]);
 
+  const handleSwapTokens = () => {
+    const tempToken = fromToken;
+    setFromToken(toToken);
+    setToToken(tempToken);
+    setFromAmount(toAmount);
+  };
+
   return (
     <section className="flex flex-col  px-2 pt-4 pb-2.5 bg-custombBlack rounded-xl w-full max-w-[472px] max-h-[600px]">
       <header className="flex justify-between self-center px-5 leading-4 whitespace-nowrap w-full text-slate-500">
@@ -161,19 +174,34 @@ const Swap: React.FC = () => {
           loading={loading}
           type="toToken"
         />
-        <SwitchTokens />
+        <SwitchTokens onClick={handleSwapTokens} />
       </div>
 
-      <button
-        type="submit"
-        disabled={loading}
-        className={`justify-center items-center px-16 py-5 mt-3 text-base text-center text-white whitespace-nowrap bg-yellow rounded-xl ${
-          loading ? "opacity-50 cursor-not-allowed" : "opacity-100"
-        }`}
-        onClick={() => swapQuote && setConfirmModalOpen(true)}
-      >
-        Swap
-      </button>
+      {!account.isConnected || !account.connector ? (
+        <button
+          onClick={() => open()}
+          className={`justify-center items-center px-16 py-5 mt-3 text-base text-center text-white whitespace-nowrap bg-yellow rounded-xl ${
+            account.isConnected || account.connector
+              ? "opacity-50 cursor-not-allowed"
+              : "opacity-100"
+          }`}
+        >
+          Connect Wallet
+        </button>
+      ) : (
+        <button
+          type="submit"
+          disabled={loading || !account.isConnected || !account.connector}
+          className={`justify-center items-center px-16 py-5 mt-3 text-base text-center text-white whitespace-nowrap bg-yellow rounded-xl ${
+            loading || !account.isConnected || !account.connector || !swapQuote
+              ? "opacity-50 cursor-not-allowed"
+              : "opacity-100"
+          }`}
+          onClick={() => swapQuote && setConfirmModalOpen(true)}
+        >
+          Swap
+        </button>
+      )}
 
       <SwapOptionsModal
         isOpen={isModalOpen}

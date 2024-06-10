@@ -1,8 +1,6 @@
 import * as React from "react";
 import { TokenType } from "../types";
 import DownArrow from "../assets/images/downArrow.svg";
-import { useAccount, useBalance } from "wagmi";
-import { etherUnits, formatUnits } from "viem";
 import LoadingShimmer from "./LoadingShimmer";
 
 interface CurrencyBadgeProps {
@@ -64,7 +62,9 @@ const Token: React.FC<TokenProps> = ({
   type,
 }) => {
   return (
-    <main className="flex justify-center w-full py-4 px-4 tracking-tight rounded-xl bg-customGray w-full">
+    <main
+      className={`flex justify-center w-full py-4 px-4 tracking-tight rounded-xl bg-customGray w-full`}
+    >
       <section className="flex w-full flex-col">
         <div className="flex justify-between w-full items-center">
           <CurrencyBadge

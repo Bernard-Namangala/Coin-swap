@@ -6,6 +6,7 @@ import { OPEN_OCEAN_CONTRACTS } from "../constants";
 import Web3 from "web3";
 import { getSwapQuote } from "../api/swap";
 import BigNumber from "bignumber.js";
+import { roundToThreeDecimalPlaces } from "../utils";
 
 const SwapAmount = ({ amount, amountUSD, action, symbol, icon }: any) => {
   return (
@@ -14,10 +15,13 @@ const SwapAmount = ({ amount, amountUSD, action, symbol, icon }: any) => {
         <div className="flex flex-1 w-full flex-col">
           <span className="text-sm py-1 text-fadedText">{action}</span>
           <h2 className="text-4xl">
-            {amount} {symbol}
+            {roundToThreeDecimalPlaces(Number(amount))} {symbol}
           </h2>
           <span className="text-sm py-1 text-fadedText">
-            ~${Number(amountUSD) * Number(amount)}
+            ~$
+            {roundToThreeDecimalPlaces(
+              Number(Number(amountUSD) * Number(amount))
+            )}
           </span>
         </div>
         <div>
@@ -45,10 +49,11 @@ const ConfirmSwapModal: React.FC<ConfirmSwapModalProps> = ({
 }) => {
   const chainId = useChainId();
   const { address, connector } = useAccount();
-
+  const [loading, setLoading] = React.useState<boolean>(false);
   if (!isOpen) return null;
 
   const swap = async () => {
+    setLoading(true);
     const web3 = new Web3((await connector?.getProvider()) as any);
 
     const open_ocean_contract_address: any = OPEN_OCEAN_CONTRACTS[chainId];
@@ -120,6 +125,7 @@ const ConfirmSwapModal: React.FC<ConfirmSwapModalProps> = ({
           console.log(error);
           throw new Error("Failed to approve spend.");
         }
+        setLoading(false);
       }
 
       const quoteData = {
@@ -210,7 +216,9 @@ const ConfirmSwapModal: React.FC<ConfirmSwapModalProps> = ({
           <div className="flex justify-between py-2 items-center">
             <span className="text-sm text-fadedText">Estimated gas</span>
             <span className="text-sm">
-              {formatUnits(BigInt(swapQuote.estimatedGas), 18)}{" "}
+              {roundToThreeDecimalPlaces(
+                Number(formatUnits(BigInt(swapQuote.estimatedGas), 18))
+              )}{" "}
               {chainId === 1 ? "ETH" : chainId === 56 ? "BNB" : ""}
             </span>
           </div>
@@ -227,8 +235,11 @@ const ConfirmSwapModal: React.FC<ConfirmSwapModalProps> = ({
         </div>
         <button
           type="submit"
+          disabled={loading}
           onClick={() => swap()}
-          className={`justify-self-end justify-center items-center px-16 py-5 mt-3 text-base text-center text-white whitespace-nowrap bg-yellow rounded-xl w-full`}
+          className={`justify-self-end justify-center items-center px-16 py-5 mt-3 text-base text-center text-white whitespace-nowrap bg-yellow rounded-xl w-full ${
+            loading ? "opacity-50 cursor-not-allowed" : ""
+          }`}
         >
           Approve and Swap
         </button>

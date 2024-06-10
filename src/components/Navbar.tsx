@@ -14,15 +14,6 @@ const Navbar = () => {
         />
       </div>
       <div className="flex space-x-4 items-center">
-        {/* <a href="#" className="text-white hover:text-yellow">
-          Swap
-        </a>
-        <a href="#" className="text-white hover:text-yellow">
-          Limit Order
-        </a>
-        <a href="#" className="text-white hover:text-yellow">
-          Cross Chain Swap
-        </a> */}
         <ConnectButton />
       </div>
     </nav>

@@ -5,7 +5,7 @@ import Navbar from "./components/Navbar";
 import { WagmiProvider } from "wagmi";
 import { config } from "./config";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createWeb3Modal } from "@web3modal/wagmi";
+import { createWeb3Modal } from "@web3modal/wagmi/react";
 
 const queryClient = new QueryClient();
 
@@ -23,8 +23,9 @@ const metadata = {
 createWeb3Modal({
   wagmiConfig: config,
   projectId,
-  enableAnalytics: true, // Optional - defaults to your Cloud configuration
-  enableOnramp: true, // Optional - false as default
+  enableAnalytics: true,
+  enableOnramp: true,
+  metadata,
 });
 
 function App() {
