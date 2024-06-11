@@ -1,6 +1,6 @@
 # Coin Swap
 
-Welcome to the documentation for Coin Swap, enabling token swaps using OpenOcean V4. This guide provides comprehensive information on how to use the platform, including features, functionalities, and step-by-step instructions.
+Welcome to the documentation for Coin Swap, enabling token swaps using OpenOcean V3. This guide provides comprehensive information on how to use the platform, including features, functionalities, and step-by-step instructions.
 
 ## Table of Contents
 
@@ -15,7 +15,7 @@ Welcome to the documentation for Coin Swap, enabling token swaps using OpenOcean
 
 ## Introduction
 
-Our DEX platform leverages the power of OpenOcean V4 to provide seamless and efficient token swaps. Users can exchange a wide range of cryptocurrencies with ease, ensuring competitive rates and minimal slippage.
+Our DEX platform leverages the power of OpenOcean V3 to provide seamless and efficient token swaps. Users can exchange a wide range of cryptocurrencies with ease, ensuring competitive rates and minimal slippage.
 
 ## Features
 
@@ -120,7 +120,7 @@ Set the transaction expiry time to define how long the swap request remains vali
    - Refresh the page and try reconnecting.
 
 3. **Token Not Listed**
-   - Ensure the token is supported by OpenOcean V4.
+   - Ensure the token is supported by OpenOcean V3.
    - Check for any network or connection issues.
 
 ## Contact and Support

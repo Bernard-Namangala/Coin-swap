@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { SwapOptions, SwapQuoteData, TokenType } from "../types";
+import React from "react";
+import { SwapQuoteData, TokenType } from "../types";
 import { formatUnits, erc20Abi } from "viem";
 import { useAccount, useChainId } from "wagmi";
 import { OPEN_OCEAN_CONTRACTS } from "../constants";
@@ -54,107 +54,115 @@ const ConfirmSwapModal: React.FC<ConfirmSwapModalProps> = ({
 
   const swap = async () => {
     setLoading(true);
-    const web3 = new Web3((await connector?.getProvider()) as any);
+    try {
+      const web3 = new Web3((await connector?.getProvider()) as any);
 
-    const open_ocean_contract_address: any = OPEN_OCEAN_CONTRACTS[chainId];
+      const open_ocean_contract_address: any = OPEN_OCEAN_CONTRACTS[chainId];
 
-    if (fromToken?.address) {
-      const args: any = [address, open_ocean_contract_address];
+      if (fromToken?.address) {
+        const args: any = [address, open_ocean_contract_address];
 
-      if (
-        fromToken?.address.toLowerCase() !==
-        "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
-      ) {
-        try {
-          const fromTokenContract = new web3.eth.Contract(
-            erc20Abi,
-            fromToken.address
-          );
+        if (
+          fromToken?.address.toLowerCase() !==
+          "0xeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"
+        ) {
+          try {
+            const fromTokenContract = new web3.eth.Contract(
+              erc20Abi,
+              fromToken.address
+            );
 
-          const currentAllowance: string = await fromTokenContract.methods
-            .allowance(address, open_ocean_contract_address)
-            .call();
+            const currentAllowance: string = await fromTokenContract.methods
+              .allowance(address, open_ocean_contract_address)
+              .call();
 
-          // If the current allowance is sufficient, no need to approve again
-          if (BigNumber(currentAllowance).lt(swapQuote.inAmount)) {
-            const isUSDT =
-              fromToken.address ===
-              "0xdac17f958d2ee523a2206206994597c13d831ec7";
+            // If the current allowance is sufficient, no need to approve again
+            if (BigNumber(currentAllowance).lt(swapQuote.inAmount)) {
+              const isUSDT =
+                fromToken.address ===
+                "0xdac17f958d2ee523a2206206994597c13d831ec7";
 
-            if (isUSDT && Number(currentAllowance.toString()) !== 0) {
-              // If current allowance is non-zero, set it to zero first
-              const zeroEstimateGas = await fromTokenContract.methods
-                .approve(open_ocean_contract_address, 0)
+              if (isUSDT && Number(currentAllowance.toString()) !== 0) {
+                // If current allowance is non-zero, set it to zero first
+                const zeroEstimateGas = await fromTokenContract.methods
+                  .approve(open_ocean_contract_address, 0)
+                  .estimateGas({ from: address });
+
+                if (!zeroEstimateGas) {
+                  throw new Error(
+                    "Failed to estimate gas for zero approval transaction."
+                  );
+                }
+
+                // Approve the spending with the estimated gas
+                await fromTokenContract.methods
+                  .approve(open_ocean_contract_address, 0)
+                  .send({
+                    from: address,
+                    gas: zeroEstimateGas.toString(),
+                  });
+              }
+
+              // Estimate gas for the final approval transaction
+              const gasEstimate = await fromTokenContract.methods
+                .approve(open_ocean_contract_address, swapQuote.inAmount)
                 .estimateGas({ from: address });
 
-              if (!zeroEstimateGas) {
+              if (!gasEstimate) {
+                setLoading(false);
                 throw new Error(
-                  "Failed to estimate gas for zero approval transaction."
+                  "Failed to estimate gas for approval transaction."
                 );
               }
 
               // Approve the spending with the estimated gas
               await fromTokenContract.methods
-                .approve(open_ocean_contract_address, 0)
+                .approve(open_ocean_contract_address, swapQuote.inAmount)
                 .send({
                   from: address,
-                  gas: zeroEstimateGas.toString(),
+                  gas: gasEstimate.toString(),
                 });
             }
-
-            // Estimate gas for the final approval transaction
-            const gasEstimate = await fromTokenContract.methods
-              .approve(open_ocean_contract_address, swapQuote.inAmount)
-              .estimateGas({ from: address });
-
-            if (!gasEstimate) {
-              throw new Error(
-                "Failed to estimate gas for approval transaction."
-              );
-            }
-
-            // Approve the spending with the estimated gas
-            await fromTokenContract.methods
-              .approve(open_ocean_contract_address, swapQuote.inAmount)
-              .send({
-                from: address,
-                gas: gasEstimate.toString(),
-              });
+          } catch (error) {
+            setLoading(false);
+            console.log(error);
+            alert("Failed to approve spend.");
           }
-        } catch (error) {
-          console.log(error);
-          throw new Error("Failed to approve spend.");
+          setLoading(false);
         }
-        setLoading(false);
+
+        const quoteData = {
+          chain: chainId,
+          inTokenAddress: fromToken?.address,
+          outTokenAddress: toToken?.address,
+          amount: swapQuote.inAmount,
+          slippage: 1,
+          gasPrice: swapQuote.estimatedGas,
+          account: address,
+        };
+
+        const transactionData = await getSwapQuote(chainId, quoteData);
+
+        const tx = {
+          from: address,
+          to: open_ocean_contract_address,
+          value: transactionData?.value,
+          gas: transactionData?.estimatedGas,
+          gasPrice: transactionData?.gasPrice,
+        };
+
+        const result = await web3.eth.sendTransaction(tx);
+
+        if (result.transactionHash) {
+          alert(result.transactionHash);
+          onClose();
+          console.log(result);
+        }
       }
-
-      const quoteData = {
-        chain: chainId,
-        inTokenAddress: fromToken?.address,
-        outTokenAddress: toToken?.address,
-        amount: swapQuote.inAmount,
-        slippage: 1,
-        gasPrice: swapQuote.estimatedGas,
-        account: address,
-      };
-
-      const transactionData = await getSwapQuote(chainId, quoteData);
-
-      const tx = {
-        from: address,
-        to: open_ocean_contract_address,
-        value: transactionData?.value,
-        gas: transactionData?.estimatedGas,
-        gasPrice: transactionData?.gasPrice,
-      };
-
-      const result = await web3.eth.sendTransaction(tx);
-
-      if (result.transactionHash) {
-        alert(result.transactionHash);
-        onClose();
-        console.log(result);
-      }
+    } catch (error) {
+      setLoading(false);
+      console.log(error);
+      alert(error);
     }
   };
 
@@ -220,7 +228,7 @@ const ConfirmSwapModal: React.FC<ConfirmSwapModalProps> = ({
               {roundToThreeDecimalPlaces(
                 Number(formatUnits(BigInt(swapQuote.estimatedGas), 18))
               )}{" "}
-              {chainId === 1 ? "ETH" : chainId === 56 ? "BNB" : ""}
+              {chainId === 137 ? "MATIC" : chainId === 56 ? "BNB" : ""}
             </span>
           </div>
           <div className="flex justify-between py-2 items-center">

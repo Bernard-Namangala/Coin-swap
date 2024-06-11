@@ -10,9 +10,8 @@ declare module "wagmi" {
 }
 
 export const config = createConfig({
-  chains: [mainnet, polygon, bsc, avalanche],
+  chains: [polygon, bsc, avalanche],
   transports: {
-    [mainnet.id]: http(),
     [polygon.id]: http(),
     [bsc.id]: http(),
     [avalanche.id]: http(),

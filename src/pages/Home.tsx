@@ -22,7 +22,7 @@ interface ImageWrapperProps {
 
 const ImageWrapper: React.FC<ImageWrapperProps> = ({ src, alt }) => {
   return (
-    <div className="cursor-pointer flex justify-center items-center px-4 w-14  h-14 rounded-3xl border-custombBlack border-solid bg-customGray border-[6px]">
+    <div className="cursor-pointer flex justify-center items-center px-4 w-14  h-14 rounded-3xl border-customBlack border-solid bg-customGray border-[6px]">
       <img
         loading="lazy"
         src={src}
@@ -141,8 +141,12 @@ const Swap: React.FC = () => {
     setFromAmount(toAmount);
   };
 
+  const userHasEnoughBalance = () => {
+    return Number(fromTokenBalance) > fromAmount;
+  };
+
   return (
-    <section className="flex flex-col  px-2 pt-4 pb-2.5 bg-custombBlack rounded-xl w-full max-w-[472px] max-h-[600px]">
+    <section className="flex flex-col  px-2 pt-4 pb-2.5 bg-customBlack rounded-xl w-full max-w-[472px] max-h-[600px]">
       <header className="flex justify-between self-center px-5 leading-4 whitespace-nowrap w-full text-slate-500">
         <div>Swap</div>
         <img
@@ -191,15 +195,24 @@ const Swap: React.FC = () => {
       ) : (
         <button
           type="submit"
-          disabled={loading || !account.isConnected || !account.connector}
+          disabled={
+            loading ||
+            !account.isConnected ||
+            !account.connector ||
+            !userHasEnoughBalance()
+          }
           className={`justify-center items-center px-16 py-5 mt-3 text-base text-center text-white whitespace-nowrap bg-yellow rounded-xl ${
-            loading || !account.isConnected || !account.connector || !swapQuote
+            loading ||
+            !account.isConnected ||
+            !account.connector ||
+            !swapQuote ||
+            !userHasEnoughBalance()
               ? "opacity-50 cursor-not-allowed"
               : "opacity-100"
           }`}
           onClick={() => swapQuote && setConfirmModalOpen(true)}
         >
-          Swap
+          {userHasEnoughBalance() ? "Swap" : "Insufficient Balance"}
         </button>
       )}
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { SwapOptions } from "../types";
 
 const SwapOptionsModal = ({
@@ -15,7 +15,7 @@ const SwapOptionsModal = ({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <div className="bg-custombBlack p-6 rounded-lg w-80 text-white">
+      <div className="bg-customBlack p-6 rounded-lg w-80 text-white">
         <h2 className="text-xl font-bold mb-4">Swap Options</h2>
 
         <div className="mb-4">

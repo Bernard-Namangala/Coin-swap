@@ -6,18 +6,17 @@ import { WagmiProvider } from "wagmi";
 import { config } from "./config";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { createWeb3Modal } from "@web3modal/wagmi/react";
+import Logo from "./assets/images/logo.png";
 
 const queryClient = new QueryClient();
 
-// 1. Get projectId at https://cloud.walletconnect.com
 const projectId = "ea46303446285f8f36158079bdc13777";
 
-// 2. Create wagmiConfig
 const metadata = {
-  name: "Web3Modal",
-  description: "Web3Modal Example",
-  url: "https://web3modal.com", // origin must match your domain & subdomain
-  icons: ["https://avatars.githubusercontent.com/u/37784886"],
+  name: "Coin Swap",
+  description: "Coin Swap",
+  url: "https://web3modal.com",
+  icons: [Logo],
 };
 
 createWeb3Modal({
